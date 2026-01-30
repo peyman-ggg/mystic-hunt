@@ -94,7 +94,7 @@ body{
 .bigMul{
   font-weight:1000;
   letter-spacing:.2px;
-  color:var(--gold);
+  color: #a8e6a1; /* static light green for potential multiplier */
   font-size: clamp(40px, 10.5vw, 56px);
   line-height:1;
   white-space:nowrap;
@@ -146,7 +146,7 @@ body{
   border:1px solid rgba(255,255,255,.10);
   background: linear-gradient(90deg, rgba(255,95,126,.85), rgba(251,191,36,.85), rgba(54,216,144,.90));
   position:relative;
-  overflow:hidden;
+  overflow: visible; /* allow the needle to bleed outside the bar */
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.35);
 }
 .needle{
@@ -157,6 +157,7 @@ body{
   border:2px solid rgba(255,255,255,.82);
   background: rgba(0,0,0,.35);
   transform: translateX(-50%);
+  z-index: 3; /* ensure it overlays the bar */
   box-shadow: 0 12px 20px rgba(0,0,0,.45);
 }
 .chanceMeta{
@@ -499,6 +500,28 @@ body{
   background: rgba(242,207,106,.95);
   box-shadow: 0 0 0 8px rgba(242,207,106,.10);
 }
+
+/* When using a custom image inside the hunt button */
+.huntBtn img{
+  width:84%;
+  height:84%;
+  display:block;
+  object-fit:contain;
+  border-radius:0;
+  position:relative;
+  z-index:0;
+  margin:auto;
+}
+
+/* When an image is used, hide the button chrome so the image replaces it */
+.huntBtn.has-img{
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  padding:0;
+}
+.huntBtn.has-img::before,
+.huntBtn.has-img::after{ display:none }
 .huntLabel{
   font-size:12px;
   letter-spacing:1.8px;
@@ -573,7 +596,7 @@ body{
 }
 .streakChip{
   font-size: clamp(18px, 5vw, 22px);
-  font-weight:1100;
+  font-weight:bold;
   color: rgba(54,216,144,.95);
   text-shadow: 0 12px 26px rgba(0,0,0,.55);
   font-variant-numeric: tabular-nums;
@@ -741,6 +764,18 @@ body{
   color: rgba(54,216,144,.95);
 }
 
+/* Cash-out label: small, fixed height to avoid layout shift */
+.cashOutLabel{
+  height:48px;
+  display:grid;
+  place-items:center;
+  gap:4px;
+  color: rgba(244,247,255,.45);
+}
+.cashOutLabel .cashMain{ font-size:10px; color: rgba(244,247,255,.45); }
+.cashOutLabel .cashAmount{ font-size:14px; color: rgba(244,247,255,.45); }
+.cashOutLabel.active .cashAmount{ color: rgba(54,216,144,.95); }
+
 .hidden{
   display:none
 }
@@ -817,7 +852,9 @@ body{
 
         <!-- Center -->
         <div class="panel centerPanel">
-          <button class="huntBtn" id="huntBtn" type="button" aria-label="Hunt"></button>
+          <button class="huntBtn has-img" id="huntBtn" type="button" aria-label="Hunt">
+            <img src="huntbtn.png" alt="Hunt">
+          </button>
           <div class="huntLabel">Hunt</div>
 
           <div class="weaponRow">
@@ -832,6 +869,11 @@ body{
   <div class="streakChip" id="streakChip" style="opacity:0">1.00x</div>
 
   <button class="cashBtn" id="cashBtn" disabled>CASH OUT</button>
+
+  <div class="cashOutLabel" id="cashOutLabel">
+    <div class="cashMain">Cash out</div>
+    <div class="cashAmount" id="cashAmount">$0.00</div>
+  </div>
 
   <div class="skipLabel">Skip</div>
   <button class="skipBtn" id="skipBtn" type="button" aria-label="Skip"></button>
@@ -977,7 +1019,8 @@ body{
     betHud.textContent = fmtMoney(b);
     betUp.disabled = betLocked || resolving;
     betDown.disabled = betLocked || resolving;
-
+    // Refresh cash-out label when bet changes
+    updateCashoutAmount();
   }
 
   function updateBalanceUI(){
@@ -998,6 +1041,8 @@ body{
 
   streakChip.style.opacity = mid ? "1" : "0";
   streakChip.textContent = fmtMul(streak);
+  // Update cash-out label to reflect current streak * bet
+  updateCashoutAmount();
   }
 
   function updateGlow(){
@@ -1029,11 +1074,13 @@ body{
     card.style.setProperty("--tier", tierColor);
     card.style.setProperty("--tierSoft", tierSoft);
 
-    tierPill.textContent = c.tier;
-    beastName.textContent = c.name;
+      tierPill.textContent = c.tier;
+      beastName.textContent = c.name;
 
-    bigMul.innerHTML = `${headlineValue.toFixed(2)}<small>x</small>`;
-    cardBottom.textContent = fmtMul(opt.m);
+      bigMul.innerHTML = `${headlineValue.toFixed(2)}<small>x</small>`;
+      cardBottom.textContent = fmtMul(opt.m);
+
+      // Keep the top multiplier color static (CSS handles the fixed light green)
 
     const pPct = Math.round(opt.p * 100);
     chanceText.textContent = pPct + "%";
@@ -1087,6 +1134,7 @@ body{
 
   lockBetIfStarting();
   const b = getBet();
+  const isFirstBet = Math.abs(streak - 1.0) < 1e-9;
 
   const c = deck[currentIdx];
   const opt = c[mode];
@@ -1101,8 +1149,8 @@ body{
   const suspense = 250;
 
   setTimeout(() => {
-    // charge bet
-    balance = round2(balance - b);
+    // charge bet only for the first hunt in the round
+    if (isFirstBet) balance = round2(balance - b);
 
     const hit = Math.random() < opt.p;
 
@@ -1125,9 +1173,10 @@ body{
       animateStreak(prev, next);
 
 
+      // Show bet deduction only when the bet was charged on this hunt
       setToast(
         "good",
-        `HIT! ${c.name} • Streak ${fmtMul(prev)} → ${fmtMul(next)} (−${fmtMoney(b)} bet)`
+        `HIT! ${c.name} • Streak ${fmtMul(prev)} → ${fmtMul(next)}` + (isFirstBet ? ` (−${fmtMoney(b)} bet)` : ``)
       );
 
       addHistoryEntry({
@@ -1220,25 +1269,8 @@ function addHistoryEntry({type, label, rightText}){
   </div>
   <div class="hRight">${rightText}</div>
 `;
-
-function startNewRound(message){
-    card.classList.remove("showMissX");
-
-  streak = 1.00;
-  hitCount = 0;
-  unlockBet();
-  clearHistory();
-
-  // Always draw AND render the first huntable card for the new round
-  currentIdx = drawIndex();
-  showCard(currentIdx);
-
-  updateBetUI();
-  updateBalanceUI();
-  updateMidStreakUI();
-  updateGlow();
-
-  if (message) setToast(null, message);
+  // newest at top
+  list.prepend(row);
 }
 
 
@@ -1255,21 +1287,24 @@ function playMissX(){
 }
 
 function updateCashoutAmount(){
+  const label = document.getElementById("cashOutLabel");
   const el = document.getElementById("cashAmount");
-  if (!el) return;
+  if (!label || !el) return;
 
+  const mid = streak > 1.0000001;
   const bet = getBet();
+  if (!mid) {
+    // default state at round start: show $0.00 muted
+    el.textContent = fmtMoney(0);
+    label.classList.remove('active');
+    return;
+  }
+
+  // mid-streak: show computed cashout and mark active (green)
   const cash = round2(bet * streak);
-
   el.textContent = fmtMoney(cash);
+  label.classList.add('active');
 }
-
-
-  // newest at top
-  list.prepend(row);
-}
-
-
   // ===== Wire =====
   wNormal.addEventListener("click", ()=>setMode("normal"));
   wHigh.addEventListener("click", ()=>setMode("high"));
