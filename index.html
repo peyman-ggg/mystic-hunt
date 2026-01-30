@@ -24,6 +24,8 @@
 
   --shadow: 0 18px 55px rgba(0,0,0,.55);
 
+  --glow-alpha: 0;
+
   --rPhone: 34px;
   --r: 22px;
   --r2: 18px;
@@ -101,13 +103,6 @@ body{
   text-shadow: 0 12px 28px rgba(0,0,0,.55);
 }
 .bigMul small{font-size:.62em; opacity:.9}
-.sub{
-  margin-top:6px;
-  font-size:12px;
-  letter-spacing:1.8px;
-  text-transform:uppercase;
-  color:rgba(244,247,255,.72);
-}
 .menuBtn{
   width:42px;height:42px;
   border-radius:16px;
@@ -138,11 +133,18 @@ body{
   background: rgba(0,0,0,.18);
   min-width:0;
 }
+.chanceLabel{
+  font-size:10px;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:rgba(244,247,255,.65);
+  align-self:start;
+}
 .chanceBar{
   height:10px;
   border-radius:999px;
   border:1px solid rgba(255,255,255,.10);
-  background: linear-gradient(90deg, rgba(54,216,144,.90), rgba(251,191,36,.85), rgba(255,95,126,.85));
+  background: linear-gradient(90deg, rgba(255,95,126,.85), rgba(251,191,36,.85), rgba(54,216,144,.90));
   position:relative;
   overflow:hidden;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.35);
@@ -192,6 +194,7 @@ body{
   grid-template-rows: auto minmax(0,1fr) auto;
   gap:10px;
   overflow:hidden;
+  box-shadow: 0 0 40px rgba(242,207,106, var(--glow-alpha));
 }
 .tierPill{
   justify-self:start;
@@ -238,6 +241,15 @@ body{
   font-weight:1000;
   color: var(--gold);
   white-space:nowrap;
+}
+
+.glowing {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(242,207,106, var(--glow-alpha)); }
+  50% { box-shadow: 0 0 60px rgba(242,207,106, var(--glow-alpha)); }
 }
 
 /* Resolving overlay (kept) */
@@ -529,18 +541,6 @@ body{
   color:#111;
 }
 
-.cashInfo{
-  margin-top: 6px;
-  font-size:13px;
-  font-weight:1000;
-  letter-spacing:.2px;
-  color: rgba(54,216,144,.95);
-  font-variant-numeric: tabular-nums;
-  font-feature-settings:"tnum" 1;
-  white-space:nowrap;
-  opacity: .95;
-}
-
 .weapon.active::after{
   content:"✓";
   position:absolute;
@@ -758,7 +758,6 @@ body{
       <div class="header">
         <div class="headline">
           <div class="bigMul" id="bigMul">1.48<small>x</small></div>
-          <div class="sub">Chance to hit</div>
         </div>
         <!--
         <button class="menuBtn" type="button" title="Menu (placeholder)">
@@ -769,6 +768,7 @@ body{
 
       <!-- Chance -->
       <div class="chanceBlock">
+        <div class="chanceLabel">Chance to Hit</div>
         <div class="chanceBar">
           <div class="needle" id="needle" style="left:50%"></div>
         </div>
@@ -832,7 +832,6 @@ body{
   <div class="streakChip" id="streakChip" style="opacity:0">1.00x</div>
 
   <button class="cashBtn" id="cashBtn" disabled>CASH OUT</button>
-  <div class="cashInfo" id="cashInfo">×1.00 • $10.00</div>
 
   <div class="skipLabel">Skip</div>
   <button class="skipBtn" id="skipBtn" type="button" aria-label="Skip"></button>
@@ -891,13 +890,16 @@ body{
   let lockedBet = 10.00;
 
   // Display-only balance
-  let balance = 2530.00;
+  let balance = 2000.00;
 
   // Current card (the one you are about to hunt)
   let currentIdx = 0;
 
   // Resolving state
   let resolving = false;
+
+  // Hit count for glow
+  let hitCount = 0;
 
   // Cash out hold
   let holdStart = 0;
@@ -975,7 +977,6 @@ body{
     betHud.textContent = fmtMoney(b);
     betUp.disabled = betLocked || resolving;
     betDown.disabled = betLocked || resolving;
-    updateCashInfo();
 
   }
 
@@ -997,6 +998,17 @@ body{
 
   streakChip.style.opacity = mid ? "1" : "0";
   streakChip.textContent = fmtMul(streak);
+  }
+
+  function updateGlow(){
+    const intensity = Math.min(hitCount, 5) / 5;
+    const alpha = 0.1 + intensity * 0.4; // 0.1 to 0.5
+    card.style.setProperty('--glow-alpha', alpha);
+    if (intensity > 0) {
+      card.classList.add('glowing');
+    } else {
+      card.classList.remove('glowing');
+    }
   }
 
   function drawIndex(){
@@ -1029,7 +1041,6 @@ body{
     modeText.textContent = mode.toUpperCase();
 
     updateMidStreakUI();
-    updateCashInfo();
 
   }
 
@@ -1099,6 +1110,7 @@ body{
       const prev = streak;
       const next = round2(streak * opt.m);
       streak = next;
+      hitCount++;
       
 
       // HIT animation: shake the card
@@ -1108,10 +1120,9 @@ body{
 
       // UI updates + streak animation
       updateMidStreakUI();
+      updateGlow();
       
       animateStreak(prev, next);
-
-      updateCashInfo();
 
 
       setToast(
@@ -1176,8 +1187,6 @@ body{
 
     startNewRound(`Cashed out +${fmtMoney(profit)}. New beast drawn.`);
 
-    updateCashInfo();
-
   }
 
   function skip(){
@@ -1216,6 +1225,7 @@ function startNewRound(message){
     card.classList.remove("showMissX");
 
   streak = 1.00;
+  hitCount = 0;
   unlockBet();
   clearHistory();
 
@@ -1226,6 +1236,7 @@ function startNewRound(message){
   updateBetUI();
   updateBalanceUI();
   updateMidStreakUI();
+  updateGlow();
 
   if (message) setToast(null, message);
 }
@@ -1284,30 +1295,21 @@ clearHistory();
 
 function startNewRound(message){
   streak = 1.00;
+  hitCount = 0;
   unlockBet();
   clearHistory();
 
   currentIdx = drawIndex();
   showCard(currentIdx);
-  updateCashInfo();
 
 
   updateBetUI();
   updateBalanceUI();
   updateMidStreakUI();
+  updateGlow();
 
   if (message) setToast(null, message);
 }
-
-function updateCashInfo(){
-  const el = document.getElementById("cashInfo");
-  if (!el) return;
-
-  const bet = getBet();
-  const cash = round2(bet * streak);
-  el.textContent = `×${streak.toFixed(2)} • ${fmtMoney(cash)}`;
-}
-
 
 startNewRound("A beast has been drawn. Choose NORMAL/HIGH, then HUNT.");
 
