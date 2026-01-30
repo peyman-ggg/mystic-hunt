@@ -1,0 +1,1316 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mystic Bounty — Fixed Mobile Prototype</title>
+  <style>
+    :root{
+  --bg0:#05070e;
+  --bg1:#0a1024;
+
+  --gold:#f2cf6a;
+  --gold2:#d9aa3a;
+
+  --text:#f4f7ff;
+  --muted:rgba(244,247,255,.68);
+
+  --panel:rgba(0,0,0,.20);
+  --line:rgba(255,255,255,.10);
+  --lineGold:rgba(242,207,106,.18);
+
+  --good:#36d890;
+  --bad:#ff5f7e;
+
+  --shadow: 0 18px 55px rgba(0,0,0,.55);
+
+  --rPhone: 34px;
+  --r: 22px;
+  --r2: 18px;
+  --r3: 14px;
+
+  /* Tier accents (overridden per card by JS) */
+  --tier:#f2cf6a;
+  --tierSoft: rgba(242,207,106,.20);
+
+  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+
+body{
+  margin:0;
+  font-family: var(--font);
+  background:
+    radial-gradient(1100px 650px at 25% 10%, rgba(242,207,106,.10), transparent 60%),
+    radial-gradient(900px 520px at 75% 30%, rgba(255,95,126,.10), transparent 60%),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+  color:var(--text);
+  display:grid;
+  place-items:center;
+  padding:18px;
+}
+
+/* PHONE: hard clip, predictable */
+.phone{
+  width: min(392px, 96vw);
+  height: min(860px, 96vh);
+  border-radius: var(--rPhone);
+  border: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  box-shadow: var(--shadow);
+  overflow:hidden;            /* critical */
+  position:relative;
+  isolation:isolate;
+}
+
+/* SCREEN: all children must be shrinkable */
+.screen{
+  height:100%;
+  padding: 14px;
+  display:grid;
+  grid-template-rows: auto auto minmax(0,1fr) auto auto;
+  gap: 10px;
+  overflow:hidden;
+}
+
+/* HEADER */
+.header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  min-width:0;
+}
+.headline{
+  flex:1;
+  min-width:0;
+  text-align:center;
+  padding-top:2px;
+}
+.bigMul{
+  font-weight:1000;
+  letter-spacing:.2px;
+  color:var(--gold);
+  font-size: clamp(40px, 10.5vw, 56px);
+  line-height:1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-shadow: 0 12px 28px rgba(0,0,0,.55);
+}
+.bigMul small{font-size:.62em; opacity:.9}
+.sub{
+  margin-top:6px;
+  font-size:12px;
+  letter-spacing:1.8px;
+  text-transform:uppercase;
+  color:rgba(244,247,255,.72);
+}
+.menuBtn{
+  width:42px;height:42px;
+  border-radius:16px;
+  border:1px solid var(--lineGold);
+  background: rgba(0,0,0,.22);
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+}
+.bars{width:18px;height:14px; position:relative;}
+.bars::before,.bars::after,.bars span{
+  content:""; position:absolute; left:0; right:0;
+  height:2px; border-radius:99px;
+  background: rgba(242,207,106,.95);
+}
+.bars::before{top:0}
+.bars span{top:6px;width:70%; margin-left:auto}
+.bars::after{bottom:0;width:85%; margin-left:auto}
+
+/* CHANCE */
+.chanceBlock{
+  display:grid;
+  gap:10px;
+  padding: 12px;
+  border-radius: var(--r2);
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+  min-width:0;
+}
+.chanceBar{
+  height:10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background: linear-gradient(90deg, rgba(54,216,144,.90), rgba(251,191,36,.85), rgba(255,95,126,.85));
+  position:relative;
+  overflow:hidden;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.35);
+}
+.needle{
+  position:absolute;
+  top:-7px;
+  width:18px;height:18px;
+  border-radius:999px;
+  border:2px solid rgba(255,255,255,.82);
+  background: rgba(0,0,0,.35);
+  transform: translateX(-50%);
+  box-shadow: 0 12px 20px rgba(0,0,0,.45);
+}
+.chanceMeta{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  font-size:12px;
+  letter-spacing:1.4px;
+  text-transform:uppercase;
+  color:rgba(244,247,255,.75);
+  white-space:nowrap;
+  min-width:0;
+}
+
+/* MAIN */
+.main{
+  min-height:0;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,78px);
+  gap:10px;
+}
+
+/* CARD */
+.card{
+  min-width:0;
+  border-radius: var(--r);
+  border:1px solid color-mix(in srgb, var(--tier) 45%, transparent);
+  background:
+    radial-gradient(650px 420px at 40% 10%, var(--tierSoft), transparent 65%),
+    linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.40));
+  padding: 12px;
+  display:grid;
+  grid-template-rows: auto minmax(0,1fr) auto;
+  gap:10px;
+  overflow:hidden;
+}
+.tierPill{
+  justify-self:start;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.22);
+  font-size:12px;
+  color:rgba(244,247,255,.78);
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.art{
+  min-width:0;
+  min-height:0;
+  border-radius: 18px;
+  border:1px solid rgba(255,255,255,.10);
+  background:
+    radial-gradient(520px 320px at 35% 25%, rgba(255,255,255,.08), transparent 62%),
+    linear-gradient(135deg, var(--tierSoft), rgba(255,95,126,.08)),
+    rgba(0,0,0,.18);
+  display:grid;
+  place-items:center;
+  padding: 14px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.beast{
+  font-size: clamp(18px, 5vw, 26px);
+  font-weight:1000;
+  letter-spacing:.2px;
+  text-shadow: 0 12px 26px rgba(0,0,0,.55);
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.cardBottom{
+  justify-self:center;
+  font-size: clamp(18px, 4.5vw, 22px);
+  font-weight:1000;
+  color: var(--gold);
+  white-space:nowrap;
+}
+
+/* Resolving overlay (kept) */
+.resolveOverlay{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  background: rgba(0,0,0,.30);
+  opacity:0;
+  pointer-events:none;
+  transition: opacity .18s ease;
+}
+.resolving .resolveOverlay{opacity:1}
+.spinner{
+  width:44px;height:44px;
+  border-radius:999px;
+  border:3px solid rgba(242,207,106,.22);
+  border-top-color: rgba(242,207,106,.95);
+  animation: spin 0.9s linear infinite;
+  box-shadow: 0 12px 26px rgba(0,0,0,.45);
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* HISTORY */
+.history{
+  min-width:0;
+  border-radius: 18px;
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+  padding:10px;
+  display:grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap:10px;
+  overflow:hidden;
+}
+
+.historyTitle{
+  font-size:12px;
+  letter-spacing:1.6px;
+  text-transform:uppercase;
+  color: rgba(244,247,255,.60);
+}
+
+.historyList{
+  min-height:0;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding-right:4px;
+}
+
+/* optional: nicer scrollbar */
+.historyList::-webkit-scrollbar{ width:8px; }
+.historyList::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.10);
+  border-radius: 999px;
+}
+.historyList::-webkit-scrollbar-track{ background: transparent; }
+
+.hRow{
+  border-radius: 14px;
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  padding:8px 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:"tnum" 1;
+}
+
+.hLeft{
+  display:flex;
+  min-width:0;
+}
+
+.hDot{
+  width:10px;height:10px;
+  border-radius:999px;
+  flex:0 0 auto;
+  background: rgba(255,255,255,.35);
+}
+
+
+.hText{
+  font-size:10px;
+  color: rgba(244,247,255,.82);
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.hRight{
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.2px;
+  white-space:nowrap;
+}
+
+.hRow.hit{
+  border-color: rgba(54,216,144,.22);
+  background: rgba(54,216,144,.08);
+}
+.hRow.hit .hDot{ background: rgba(54,216,144,.95); }
+.hRow.hit .hRight{ color: rgba(54,216,144,.98); }
+
+.hRow.miss{
+  border-color: rgba(255,95,126,.22);
+  background: rgba(255,95,126,.08);
+}
+.hRow.miss .hDot{ background: rgba(255,95,126,.95); }
+.hRow.miss .hRight{ color: rgba(255,95,126,.98); }
+
+
+/* TOAST */
+.toast{
+  min-width:0;
+  border-radius: var(--r2);
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.22);
+  padding:10px 12px;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  min-height: 56px;
+  overflow:hidden;
+}
+.dot{
+  width:10px;height:10px;
+  border-radius:999px;
+  margin-top:4px;
+  background: rgba(255,255,255,.35);
+  flex:0 0 auto;
+}
+.dot.good{background: rgba(54,216,144,.95)}
+.dot.bad{background: rgba(255,95,126,.95)}
+.toastText{
+  min-width:0;
+  font-size:12px;
+  line-height:1.35;
+  color:rgba(244,247,255,.86);
+  display:-webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow:hidden;
+}
+
+/* CONTROLS: responsive and never bleed */
+.controls{
+  min-width:0;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns: minmax(0, 108px) minmax(0, 1fr) minmax(0, 116px);
+  gap:10px;
+  align-items:stretch;
+}
+
+/* If space gets tight, switch to two rows so right panel doesn't overflow */
+@media (max-width: 360px){
+  .controls{
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "bet right"
+      "center center";
+  }
+  .betPanel{grid-area: bet}
+  .rightPanel{grid-area: right}
+  .centerPanel{grid-area: center}
+}
+
+.panel{
+  min-width:0;
+  overflow:hidden;
+  border-radius: var(--r2);
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+  padding:10px;
+}
+
+/* Bet panel */
+.betPanel{
+  display:grid;
+  gap:10px;
+  justify-items:center;
+  align-content:center;
+}
+.label{
+  font-size:12px;
+  letter-spacing:1.6px;
+  text-transform:uppercase;
+  color:rgba(244,247,255,.65);
+}
+.stepBtn{
+  width: clamp(54px, 16vw, 60px);
+  height: 44px;
+  border-radius: 16px;
+  border:1px solid rgba(242,207,106,.18);
+  background: rgba(0,0,0,.22);
+  color: var(--gold);
+  font-size:22px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.stepBtn[disabled]{opacity:.45; cursor:not-allowed}
+.betValue{
+  font-size:20px;
+  font-weight:1000;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:"tnum" 1;
+}
+
+/* Center panel */
+.centerPanel{
+  display:grid;
+  gap:10px;
+  justify-items:center;
+  align-content:center;
+}
+.huntBtn{
+  width: clamp(76px, 22vw, 92px);
+  height: clamp(76px, 22vw, 92px);
+  border-radius:999px;
+  border:2px solid rgba(242,207,106,.55);
+  background: radial-gradient(circle at 35% 30%, rgba(242,207,106,.18), rgba(0,0,0,.30));
+  box-shadow: 0 14px 28px rgba(0,0,0,.55);
+  cursor:pointer;
+  position:relative;
+}
+.huntBtn::before{
+  content:"";
+  position:absolute;
+  inset:18px;
+  border-radius:999px;
+  border:2px solid rgba(242,207,106,.40);
+}
+.huntBtn::after{
+  content:"";
+  position:absolute;
+  width:14px; height:14px;
+  border-radius:999px;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  background: rgba(242,207,106,.95);
+  box-shadow: 0 0 0 8px rgba(242,207,106,.10);
+}
+.huntLabel{
+  font-size:12px;
+  letter-spacing:1.8px;
+  text-transform:uppercase;
+  color:rgba(244,247,255,.70);
+  margin-top:-6px;
+}
+.weaponRow{
+  width:100%;
+  display:grid;
+  grid-template-rows: 1fr 1fr; /* stacked */
+  gap:10px;
+}
+
+.weapon{
+  width:100%;
+  height:48px;
+  border-radius:14px;
+  border:1px solid rgba(242,207,106,.25);
+  background: rgba(0,0,0,.25);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding: 0 12px;
+  font-weight:900;
+  font-size:13px;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+
+  color:rgba(244,247,255,.85);
+  white-space:nowrap;
+  overflow:hidden;
+}
+
+.weapon.active{
+  background: linear-gradient(180deg, rgba(242,207,106,.35), rgba(242,207,106,.18));
+  border-color: rgba(242,207,106,.65);
+  color:#111;
+}
+
+.cashInfo{
+  margin-top: 6px;
+  font-size:13px;
+  font-weight:1000;
+  letter-spacing:.2px;
+  color: rgba(54,216,144,.95);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:"tnum" 1;
+  white-space:nowrap;
+  opacity: .95;
+}
+
+.weapon.active::after{
+  content:"✓";
+  position:absolute;
+  right:10px;
+  font-size:12px;
+  font-weight:1000;
+}
+
+
+.ico{
+  width:16px;
+  height:5px;
+  border-radius:999px;
+  background: currentColor;
+  opacity:.95;
+  flex:0 0 auto;
+}
+
+.weapon .ico{
+  display:none;
+}
+
+
+/* Right panel */
+.rightPanel{
+  display:grid;
+  gap:10px;
+  justify-items:center;
+  align-content:center;
+}
+.streakChip{
+  font-size: clamp(18px, 5vw, 22px);
+  font-weight:1100;
+  color: rgba(54,216,144,.95);
+  text-shadow: 0 12px 26px rgba(0,0,0,.55);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:"tnum" 1;
+  white-space:nowrap;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.holdWrap{
+  width:100%;
+  display:grid;
+  place-items:center;
+  position:relative;
+}
+.cashBtn{
+  width: clamp(72px, 20vw, 88px);
+  height: clamp(72px, 20vw, 88px);
+  border-radius:999px;
+  border:1px solid rgba(54,216,144,.55);
+  background: rgba(54,216,144,.16);
+  color: rgba(54,216,144,.95);
+  font-weight:1100;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  line-height:1.05;
+  box-shadow: 0 16px 30px rgba(0,0,0,.45);
+  user-select:none;
+  position:relative;
+  overflow:hidden;
+}
+.cashBtn[disabled]{opacity:.35; cursor:not-allowed}
+.cashBtn span{font-size:12px}
+
+.skipLabel{
+  font-size:12px;
+  letter-spacing:1.6px;
+  text-transform:uppercase;
+  color:rgba(244,247,255,.65);
+}
+.skipBtn{
+  width: clamp(52px, 16vw, 64px);
+  height: clamp(52px, 16vw, 64px);
+  border-radius: 18px;
+  border:1px solid rgba(242,207,106,.18);
+  background: rgba(0,0,0,.22);
+  cursor:pointer;
+  position:relative;
+  user-select:none;
+}
+.skipBtn::before,.skipBtn::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  width:16px; height:16px;
+  border-right:4px solid rgba(242,207,106,.95);
+  border-top:4px solid rgba(242,207,106,.95);
+  transform: translateY(-50%) rotate(45deg);
+  border-radius:2px;
+}
+.skipBtn::before{left:18px}
+.skipBtn::after{left:28px; opacity:.85}
+
+/* HUD */
+.hud{
+  min-width:0;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 0 4px;
+}
+.hudBlock{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.hudTitle{
+  font-size:12px;
+  letter-spacing:1.6px;
+  text-transform:uppercase;
+  color:rgba(244,247,255,.55);
+}
+.hudVal{
+  font-size:14px;
+  font-weight:900;
+  color:rgba(244,247,255,.82);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:"tnum" 1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width: 170px;
+}
+
+/* While resolving */
+.resolving button{pointer-events:none}
+.resolving .huntBtn{
+  animation: pulse 0.8s ease-in-out infinite;
+  cursor:not-allowed;
+  opacity:.92;
+}
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.03)}
+}
+
+/* HIT: impact shake */
+@keyframes cardShake {
+  0%   { transform: translateX(0) rotate(0deg); }
+  15%  { transform: translateX(-6px) rotate(-1deg); }
+  30%  { transform: translateX(6px)  rotate(1deg); }
+  45%  { transform: translateX(-5px) rotate(-1deg); }
+  60%  { transform: translateX(5px)  rotate(1deg); }
+  80%  { transform: translateX(-3px) rotate(-0.5deg); }
+  100% { transform: translateX(0) rotate(0deg); }
+}
+
+.card.hitShake {
+  animation: cardShake 420ms ease-in-out;
+}
+
+/* MISS: red X overlay */
+.missX{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  font-size: clamp(72px, 18vw, 110px);
+  font-weight: 1100;
+  color: rgba(255,95,126,.92);
+  text-shadow: 0 18px 40px rgba(0,0,0,.65);
+  opacity:0;
+  transform: scale(.92);
+  transition: opacity 120ms ease, transform 120ms ease;
+  pointer-events:none;
+}
+
+.card.showMissX .missX{
+  opacity:1;
+  transform: scale(1);
+}
+
+.cashBtn{
+  display:grid;
+  place-items:center;
+  gap:4px;
+  text-align:center;
+}
+
+.cashMain{
+  font-size:12px;
+  letter-spacing:1.4px;
+  text-transform:uppercase;
+}
+
+.cashAmount{
+  font-size:16px;
+  font-weight:1100;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:"tnum" 1;
+  color: rgba(54,216,144,.95);
+}
+
+.hidden{
+  display:none
+}
+
+
+
+  </style>
+</head>
+
+<body>
+  <div class="phone" id="phone">
+    <div class="screen" id="screen">
+
+      <!-- Header -->
+      <div class="header">
+        <div class="headline">
+          <div class="bigMul" id="bigMul">1.48<small>x</small></div>
+          <div class="sub">Chance to hit</div>
+        </div>
+        <!--
+        <button class="menuBtn" type="button" title="Menu (placeholder)">
+          <div class="bars"><span></span></div>
+        </button>
+        -->
+      </div>
+
+      <!-- Chance -->
+      <div class="chanceBlock">
+        <div class="chanceBar">
+          <div class="needle" id="needle" style="left:50%"></div>
+        </div>
+        <div class="chanceMeta">
+          <span id="chanceText" class="hidden">66%</span>
+          <span style="opacity:.45" class="hidden">•</span>
+          <span id="modeText">NORMAL</span>
+        </div>
+      </div>
+
+      <!-- Main -->
+      <div class="main">
+        <div class="card" id="card">
+          <div class="tierPill" id="tierPill">Dangerous</div>
+          <div class="art" id="art">
+            <div class="beast" id="beastName">Sabertooth</div>
+            <div class="missX" id="missX">✕</div>
+            
+          </div>
+          <div class="cardBottom" id="cardBottom">1.48x</div>
+        </div>
+
+        <div class="history" id="history">
+        <div class="historyTitle">HISTORY</div>
+        <div class="historyList" id="historyList"></div>
+        </div>
+
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast">
+        <div class="dot" id="toastDot"></div>
+        <div class="toastText" id="toastText">A beast has been drawn. Choose NORMAL/HIGH, then HUNT.</div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+
+        <!-- Bet -->
+        <div class="panel betPanel">
+          <div class="label">Bet</div>
+          <button class="stepBtn" id="betUp" type="button">+</button>
+          <div class="betValue" id="betValue">$10</div>
+          <button class="stepBtn" id="betDown" type="button">−</button>
+        </div>
+
+        <!-- Center -->
+        <div class="panel centerPanel">
+          <button class="huntBtn" id="huntBtn" type="button" aria-label="Hunt"></button>
+          <div class="huntLabel">Hunt</div>
+
+          <div class="weaponRow">
+  <button class="weapon active" id="wNormal" type="button"><span>NORMAL</span></button>
+  <button class="weapon" id="wHigh" type="button"><span>HIGH</span></button>
+</div>
+
+        </div>
+
+        <!-- Right -->
+        <div class="panel rightPanel">
+  <div class="streakChip" id="streakChip" style="opacity:0">1.00x</div>
+
+  <button class="cashBtn" id="cashBtn" disabled>CASH OUT</button>
+  <div class="cashInfo" id="cashInfo">×1.00 • $10.00</div>
+
+  <div class="skipLabel">Skip</div>
+  <button class="skipBtn" id="skipBtn" type="button" aria-label="Skip"></button>
+</div>
+
+
+      </div>
+
+      <!-- HUD -->
+      <div class="hud">
+        <div class="hudBlock">
+          <div class="hudTitle">Balance</div>
+          <div class="hudVal" id="balance">$2,000.00</div>
+        </div>
+        <div class="hudBlock" style="text-align:right">
+          <div class="hudTitle">Bet</div>
+          <div class="hudVal" id="betHud">$10.00</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+  // ===== Deck =====
+  const deck = [
+    // Common prey (9)
+    {tier:"Common prey", name:"Boar",         normal:{p:0.88, m:1.11}, high:{p:0.69, m:1.42}},
+    {tier:"Common prey", name:"Jackal",       normal:{p:0.79, m:1.24}, high:{p:0.56, m:1.75}},
+    {tier:"Common prey", name:"Hyena",        normal:{p:0.86, m:1.14}, high:{p:0.66, m:1.48}},
+    {tier:"Common prey", name:"Viper",        normal:{p:0.85, m:1.15}, high:{p:0.60, m:1.63}},
+    {tier:"Common prey", name:"Raven",        normal:{p:0.84, m:1.17}, high:{p:0.64, m:1.53}},
+    {tier:"Common prey", name:"Fox",          normal:{p:0.82, m:1.20}, high:{p:0.61, m:1.61}},
+    {tier:"Common prey", name:"Stag",         normal:{p:0.85, m:1.15}, high:{p:0.70, m:1.40}},
+    {tier:"Common prey", name:"Coyote",       normal:{p:0.87, m:1.13}, high:{p:0.63, m:1.56}},
+    // Dangerous (6)
+    {tier:"Dangerous",   name:"Dire Wolf",    normal:{p:0.60, m:1.63}, high:{p:0.36, m:2.72}},
+    {tier:"Dangerous",   name:"Sabertooth",   normal:{p:0.66, m:1.48}, high:{p:0.41, m:2.39}},
+    {tier:"Dangerous",   name:"Basilisk",     normal:{p:0.65, m:1.51}, high:{p:0.53, m:1.85}},
+    {tier:"Dangerous",   name:"Manticore Cub",normal:{p:0.66, m:1.48}, high:{p:0.46, m:2.13}},
+    {tier:"Dangerous",   name:"Ogre Hound",   normal:{p:0.63, m:1.56}, high:{p:0.35, m:2.80}},
+    {tier:"Dangerous",   name:"Stone Bear",   normal:{p:0.64, m:1.53}, high:{p:0.38, m:2.58}},
+    // Mythic (3)
+    {tier:"Mythic",      name:"Griffin", normal:{p:0.40, m:2.45}, high:{p:0.245, m:4}},
+    {tier:"Mythic",      name:"Kraken", normal:{p:0.1960, m:5}, high:{p:0.1225, m:8}},
+    {tier:"Mythic",      name:"Dragon", normal:{p:0.1225, m:7}, high:{p:0.07, m:14}},
+  ];
+
+  // ===== State =====
+  let mode = "normal";
+  let streak = 1.00;
+
+  // Bet lock during streak
+  let bet = 10.00;
+  let betLocked = false;
+  let lockedBet = 10.00;
+
+  // Display-only balance
+  let balance = 2530.00;
+
+  // Current card (the one you are about to hunt)
+  let currentIdx = 0;
+
+  // Resolving state
+  let resolving = false;
+
+  // Cash out hold
+  let holdStart = 0;
+
+  // ===== DOM =====
+  const $ = (id) => document.getElementById(id);
+
+  const screen = $("screen");
+  const card = $("card");
+
+  const bigMul = $("bigMul");
+  const needle = $("needle");
+  const chanceText = $("chanceText");
+  const modeText = $("modeText");
+
+  const tierPill = $("tierPill");
+  const beastName = $("beastName");
+  const cardBottom = $("cardBottom");
+
+  const toastDot = $("toastDot");
+  const toastText = $("toastText");
+
+  const betUp = $("betUp");
+  const betDown = $("betDown");
+  const betValue = $("betValue");
+  const betHud = $("betHud");
+  const balanceHud = $("balance");
+
+  const wNormal = $("wNormal");
+  const wHigh = $("wHigh");
+
+  const huntBtn = $("huntBtn");
+  const cashBtn = $("cashBtn");
+  const skipBtn = $("skipBtn");
+
+  const streakChip = $("streakChip");
+  const stack = $("stack");
+
+
+  // ===== Helpers =====
+  const round2 = (x) => Math.round(x * 100) / 100;
+  const fmtMul = (x) => round2(x).toFixed(2) + "x";
+  const fmtMoney = (x) => "$" + x.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  function tierAccent(tier){
+    // returns [color, soft]
+    if (tier === "Common prey") return ["#36d890", "rgba(54,216,144,.18)"];
+    if (tier === "Dangerous")  return ["#f2cf6a", "rgba(242,207,106,.20)"];
+    return ["#a78bfa", "rgba(167,139,250,.18)"]; // Mythic
+  }
+
+  function setToast(kind, msg){
+    toastDot.classList.remove("good","bad");
+    if (kind === "good") toastDot.classList.add("good");
+    if (kind === "bad") toastDot.classList.add("bad");
+    toastText.textContent = msg;
+  }
+
+  function getBet(){
+    return betLocked ? lockedBet : bet;
+  }
+  function lockBetIfStarting(){
+    if (!betLocked && Math.abs(streak - 1.0) < 1e-9){
+      betLocked = true;
+      lockedBet = bet;
+    }
+  }
+  function unlockBet(){
+    betLocked = false;
+  }
+
+  function updateBetUI(){
+    const b = getBet();
+    betValue.textContent = "$" + round2(b).toFixed(0);
+    betHud.textContent = fmtMoney(b);
+    betUp.disabled = betLocked || resolving;
+    betDown.disabled = betLocked || resolving;
+    updateCashInfo();
+
+  }
+
+  function updateBalanceUI(){
+    balanceHud.textContent = fmtMoney(balance);
+  }
+
+  function updateMidStreakUI(){
+    const mid = streak > 1.0000001;
+
+  cashBtn.disabled = !mid || resolving;
+
+  // Skip only before the streak starts (first draw state)
+  const canSkip = (!betLocked && !mid && !resolving);
+  skipBtn.disabled = !canSkip;
+  skipBtn.style.opacity = canSkip ? "1" : ".35";
+  skipBtn.style.cursor = canSkip ? "pointer" : "not-allowed";
+
+
+  streakChip.style.opacity = mid ? "1" : "0";
+  streakChip.textContent = fmtMul(streak);
+  }
+
+  function drawIndex(){
+    return Math.floor(Math.random() * deck.length);
+  }
+
+  function showCard(idx){
+    currentIdx = idx;
+    const c = deck[idx];
+    const opt = c[mode];
+    // Top headline logic:
+    // - If not in streak yet, show card multiplier
+    // - If in streak, show projected streak if HIT (streak * card multiplier)
+    const projected = round2(streak * opt.m);
+    const headlineValue = (streak > 1.0000001) ? projected : opt.m;
+
+    const [tierColor, tierSoft] = tierAccent(c.tier);
+    card.style.setProperty("--tier", tierColor);
+    card.style.setProperty("--tierSoft", tierSoft);
+
+    tierPill.textContent = c.tier;
+    beastName.textContent = c.name;
+
+    bigMul.innerHTML = `${headlineValue.toFixed(2)}<small>x</small>`;
+    cardBottom.textContent = fmtMul(opt.m);
+
+    const pPct = Math.round(opt.p * 100);
+    chanceText.textContent = pPct + "%";
+    needle.style.left = (opt.p * 100).toFixed(2) + "%";
+    modeText.textContent = mode.toUpperCase();
+
+    updateMidStreakUI();
+    updateCashInfo();
+
+  }
+
+  function drawNewCard(){
+    showCard(drawIndex());
+  }
+
+  function setMode(newMode){
+    if (resolving) return;
+    mode = newMode;
+    wNormal.classList.toggle("active", mode === "normal");
+    wHigh.classList.toggle("active", mode === "high");
+    setToast(null, `Mode set to ${mode.toUpperCase()}.`);
+    showCard(currentIdx);
+  }
+
+  function setResolving(on){
+    resolving = on;
+    screen.classList.toggle("resolving", on);
+    updateBetUI();
+    updateMidStreakUI();
+    wNormal.disabled = on;
+    wHigh.disabled = on;
+    huntBtn.disabled = on;
+    skipBtn.disabled = on;
+  }
+
+  // Smooth streak animation for the chip
+  function animateStreak(from, to, ms=450){
+    const start = performance.now();
+    function tick(now){
+      const t = Math.min(1, (now - start) / ms);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const v = from + (to - from) * eased;
+      streakChip.textContent = fmtMul(v);
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ===== Game actions =====
+  function hunt(){
+  if (resolving) return;
+
+  lockBetIfStarting();
+  const b = getBet();
+
+  const c = deck[currentIdx];
+  const opt = c[mode];
+
+  setResolving(true);
+  setToast(null, "Hunting…");
+
+  // Clear any prior miss overlay
+  card.classList.remove("showMissX");
+
+  // suspense window (keep your timing feel)
+  const suspense = 250;
+
+  setTimeout(() => {
+    // charge bet
+    balance = round2(balance - b);
+
+    const hit = Math.random() < opt.p;
+
+    if (hit){
+      const prev = streak;
+      const next = round2(streak * opt.m);
+      streak = next;
+      
+
+      // HIT animation: shake the card
+      card.classList.remove("hitShake");
+      void card.offsetWidth; // force reflow so it always replays
+      card.classList.add("hitShake");
+
+      // UI updates + streak animation
+      updateMidStreakUI();
+      
+      animateStreak(prev, next);
+
+      updateCashInfo();
+
+
+      setToast(
+        "good",
+        `HIT! ${c.name} • Streak ${fmtMul(prev)} → ${fmtMul(next)} (−${fmtMoney(b)} bet)`
+      );
+
+      addHistoryEntry({
+        type: "hit",
+        label: `${c.name} • +${opt.m.toFixed(2)}x`,
+        rightText: fmtMul(streak)
+      });
+      
+      drawNewCard(); // next decision card
+    } else {
+      // MISS animation: show red X briefly, then start a new round
+      card.classList.add("showMissX");
+      setToast("bad", `MISS. ${c.name} (−${fmtMoney(b)} bet)`);
+
+      setTimeout(() => {
+        card.classList.remove("showMissX");
+        startNewRound("New beast drawn.");
+        setResolving(false);
+      }, 650);
+
+      // Keep resolving true until the miss animation finishes
+      updateBetUI();
+      updateBalanceUI();
+      updateMidStreakUI();
+      return;
+    }
+
+    updateBetUI();
+    updateBalanceUI();
+    updateMidStreakUI();
+    setResolving(false);
+
+  }, suspense);
+}
+
+
+  
+
+  function cashOut(){
+    if (resolving) return;
+    if (!(streak > 1.0000001)) return;
+
+    const b = getBet();
+    const profit = round2(b * (streak - 1));
+    balance = round2(balance + profit);
+
+    setToast("good", `CASH OUT! +${fmtMoney(profit)} at ${fmtMul(streak)}. New streak begins.`);
+
+    streak = 1.00;
+    clearHistory();
+    unlockBet();
+    drawNewCard();
+
+    updateBetUI();
+    updateBalanceUI();
+    updateMidStreakUI();
+
+    startNewRound(`Cashed out +${fmtMoney(profit)}. New beast drawn.`);
+
+    updateCashInfo();
+
+  }
+
+  function skip(){
+    const mid = streak > 1.0000001;
+  if (resolving || betLocked || mid) return;  // NEW safety
+  setToast(null, "Skipped. New beast drawn.");
+  drawNewCard();
+  }
+
+  function betStep(delta){
+    if (betLocked || resolving) return;
+    bet = round2(Math.max(1, bet + delta));
+    updateBetUI();
+  }
+
+  function clearHistory(){
+  const list = document.getElementById("historyList");
+  if (list) list.innerHTML = "";
+}
+
+function addHistoryEntry({type, label, rightText}){
+  const list = document.getElementById("historyList");
+  if (!list) return;
+
+  const row = document.createElement("div");
+  row.className = `hRow ${type}`;
+
+  row.innerHTML = `
+  <div class="hLeft">
+    <div class="hText">${label}</div>
+  </div>
+  <div class="hRight">${rightText}</div>
+`;
+
+function startNewRound(message){
+    card.classList.remove("showMissX");
+
+  streak = 1.00;
+  unlockBet();
+  clearHistory();
+
+  // Always draw AND render the first huntable card for the new round
+  currentIdx = drawIndex();
+  showCard(currentIdx);
+
+  updateBetUI();
+  updateBalanceUI();
+  updateMidStreakUI();
+
+  if (message) setToast(null, message);
+}
+
+
+function playHitImpact(){
+  card.classList.remove("hitShake");
+  // Force reflow to replay animation even if triggered quickly
+  void card.offsetWidth;
+  card.classList.add("hitShake");
+}
+
+function playMissX(){
+  card.classList.add("showMissX");
+  setTimeout(() => card.classList.remove("showMissX"), 650);
+}
+
+function updateCashoutAmount(){
+  const el = document.getElementById("cashAmount");
+  if (!el) return;
+
+  const bet = getBet();
+  const cash = round2(bet * streak);
+
+  el.textContent = fmtMoney(cash);
+}
+
+
+  // newest at top
+  list.prepend(row);
+}
+
+
+  // ===== Wire =====
+  wNormal.addEventListener("click", ()=>setMode("normal"));
+  wHigh.addEventListener("click", ()=>setMode("high"));
+
+  huntBtn.addEventListener("click", hunt);
+
+
+  window.addEventListener("mouseup", ()=>endHold(false));
+  window.addEventListener("touchend", ()=>endHold(false));
+  window.addEventListener("touchcancel", ()=>endHold(false));
+  cashBtn.addEventListener("click", cashOut);
+  cashBtn.addEventListener("mouseleave", ()=>endHold(false));
+
+  skipBtn.addEventListener("click", skip);
+
+  betUp.addEventListener("click", ()=>betStep(+1));
+  betDown.addEventListener("click", ()=>betStep(-1));
+
+  // ===== Init =====
+updateBalanceUI();
+updateBetUI();
+clearHistory();
+
+function startNewRound(message){
+  streak = 1.00;
+  unlockBet();
+  clearHistory();
+
+  currentIdx = drawIndex();
+  showCard(currentIdx);
+  updateCashInfo();
+
+
+  updateBetUI();
+  updateBalanceUI();
+  updateMidStreakUI();
+
+  if (message) setToast(null, message);
+}
+
+function updateCashInfo(){
+  const el = document.getElementById("cashInfo");
+  if (!el) return;
+
+  const bet = getBet();
+  const cash = round2(bet * streak);
+  el.textContent = `×${streak.toFixed(2)} • ${fmtMoney(cash)}`;
+}
+
+
+startNewRound("A beast has been drawn. Choose NORMAL/HIGH, then HUNT.");
+
+</script>
+</body>
+</html>
