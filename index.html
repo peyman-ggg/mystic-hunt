@@ -1060,6 +1060,36 @@ body{
     return Math.floor(Math.random() * deck.length);
   }
 
+  // Log-space piecewise mapping with a watermark.
+  // Watermark: Griffin at ~0.245 probability should map to 30% from left.
+  function scaleProbabilityToNeedle(prob) {
+    const minPercent = 0.02;      // left bound for tiny probs
+    const maxPercent = 0.98;      // right bound for largest probs
+    const minProb = 0.001;        // floor to avoid -Inf
+
+    // Watermark settings (Griffin high-mode ~0.245 -> 30%)
+    const watermarkProb = 0.245;
+    const watermarkPercent = 0.30;
+
+    const safe = Math.max(prob, minProb);
+    const logMin = Math.log(minProb);
+    const logMax = Math.log(1.0);
+    const normalized = (Math.log(safe) - logMin) / (logMax - logMin);
+
+    const watermarkNorm = (Math.log(watermarkProb) - logMin) / (logMax - logMin);
+
+    if (normalized <= watermarkNorm) {
+      // stretch lower-range so many low/mid probs sit left of watermark
+      return minPercent + (normalized / watermarkNorm) * (watermarkPercent - minPercent);
+    }
+
+    // above watermark: map remaining normalized space to [watermarkPercent, maxPercent]
+    return (
+      watermarkPercent +
+      ((normalized - watermarkNorm) / (1 - watermarkNorm)) * (maxPercent - watermarkPercent)
+    );
+  }
+
   function showCard(idx){
     currentIdx = idx;
     const c = deck[idx];
@@ -1084,7 +1114,7 @@ body{
 
     const pPct = Math.round(opt.p * 100);
     chanceText.textContent = pPct + "%";
-    needle.style.left = (opt.p * 100).toFixed(2) + "%";
+    needle.style.left = (scaleProbabilityToNeedle(opt.p) * 100).toFixed(2) + "%";
     modeText.textContent = mode.toUpperCase();
 
     updateMidStreakUI();
