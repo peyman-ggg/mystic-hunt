@@ -102,7 +102,14 @@ body{
   text-overflow:ellipsis;
   text-shadow: 0 12px 28px rgba(0,0,0,.55);
 }
-.bigMul small{font-size:.62em; opacity:.9}
+.mulSubtext{
+  font-size: clamp(14px, 3.5vw, 22px);
+  font-weight:900;
+  color:gold;
+  text-align:center;
+  margin-top:4px;
+  letter-spacing:.5px;
+}
 .menuBtn{
   width:42px;height:42px;
   border-radius:16px;
@@ -140,6 +147,14 @@ body{
   color:rgba(244,247,255,.65);
   align-self:start;
 }
+.chancePct{
+  font-size:12px;
+  letter-spacing:.5px;
+  color:rgba(244,247,255,.95);
+  text-align:center;
+  margin-bottom:-4px;
+  display: none;
+}
 .chanceBar{
   height:10px;
   border-radius:999px;
@@ -151,12 +166,14 @@ body{
 }
 .needle{
   position:absolute;
-  top:-7px;
-  width:18px;height:18px;
-  border-radius:999px;
-  border:2px solid rgba(255,255,255,.82);
-  background: rgba(0,0,0,.35);
-  transform: translateX(-50%);
+  top:50%;
+  width:24px;
+  height:24px;
+  background-image: url('target-nob.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: translate(-50%, -50%);
   z-index: 3; /* ensure it overlays the bar */
   box-shadow: 0 12px 20px rgba(0,0,0,.45);
 }
@@ -238,9 +255,9 @@ body{
 }
 .cardBottom{
   justify-self:center;
-  font-size: clamp(18px, 4.5vw, 22px);
-  font-weight:1000;
-  color: var(--gold);
+  font-size: clamp(16px, 4.5vw, 18px);
+  font-weight:700;
+  color:rgba(244,247,255,.65);
   white-space:nowrap;
 }
 
@@ -641,8 +658,8 @@ body{
   color:rgba(244,247,255,.65);
 }
 .skipBtn{
-  width: clamp(52px, 16vw, 64px);
-  height: clamp(52px, 16vw, 64px);
+  width: clamp(50px, 16vw, 62px);
+  height: clamp(36px, 16vw, 48px);
   border-radius: 18px;
   border:1px solid rgba(242,207,106,.18);
   background: rgba(0,0,0,.22);
@@ -660,8 +677,8 @@ body{
   transform: translateY(-50%) rotate(45deg);
   border-radius:2px;
 }
-.skipBtn::before{left:18px}
-.skipBtn::after{left:28px; opacity:.85}
+.skipBtn::before{left:12px}
+.skipBtn::after{left:22px; opacity:.85}
 
 /* HUD */
 .hud{
@@ -728,8 +745,8 @@ body{
   inset:0;
   display:grid;
   place-items:center;
-  font-size: clamp(72px, 18vw, 110px);
-  font-weight: 1100;
+  font-size: clamp(60px, 18vw, 80px);
+  font-weight: 1600;
   color: rgba(255,95,126,.92);
   text-shadow: 0 18px 40px rgba(0,0,0,.65);
   opacity:0;
@@ -773,7 +790,7 @@ body{
   color: rgba(244,247,255,.45);
 }
 .cashOutLabel .cashMain{ font-size:10px; color: rgba(244,247,255,.45); }
-.cashOutLabel .cashAmount{ font-size:14px; color: rgba(244,247,255,.45); }
+.cashOutLabel .cashAmount{ font-size:16px; font-weight: 700; color: rgba(244,247,255,.45); }
 .cashOutLabel.active .cashAmount{ color: rgba(54,216,144,.95); }
 
 .hidden{
@@ -792,7 +809,8 @@ body{
       <!-- Header -->
       <div class="header">
         <div class="headline">
-          <div class="bigMul" id="bigMul">1.48<small>x</small></div>
+          <div class="bigMul" id="bigMul">$14.80</div>
+          <div class="mulSubtext" id="mulSubtext">1.48x</div>
         </div>
         <!--
         <button class="menuBtn" type="button" title="Menu (placeholder)">
@@ -804,6 +822,7 @@ body{
       <!-- Chance -->
       <div class="chanceBlock">
         <div class="chanceLabel">Chance to Hit</div>
+        <div class="chancePct" id="chancePct">66%</div>
         <div class="chanceBar">
           <div class="needle" id="needle" style="left:50%"></div>
         </div>
@@ -897,45 +916,33 @@ body{
     </div>
   </div>
 
-<script>
-  // ===== Deck =====
-  const deck = [
-    // Common prey (9)
-    {tier:"Common prey", name:"Boar",         normal:{p:0.88, m:1.11}, high:{p:0.69, m:1.42}},
-    {tier:"Common prey", name:"Jackal",       normal:{p:0.79, m:1.24}, high:{p:0.56, m:1.75}},
-    {tier:"Common prey", name:"Hyena",        normal:{p:0.86, m:1.14}, high:{p:0.66, m:1.48}},
-    {tier:"Common prey", name:"Viper",        normal:{p:0.85, m:1.15}, high:{p:0.60, m:1.63}},
-    {tier:"Common prey", name:"Raven",        normal:{p:0.84, m:1.17}, high:{p:0.64, m:1.53}},
-    {tier:"Common prey", name:"Fox",          normal:{p:0.82, m:1.20}, high:{p:0.61, m:1.61}},
-    {tier:"Common prey", name:"Stag",         normal:{p:0.85, m:1.15}, high:{p:0.70, m:1.40}},
-    {tier:"Common prey", name:"Coyote",       normal:{p:0.87, m:1.13}, high:{p:0.63, m:1.56}},
-    // Dangerous (6)
-    {tier:"Dangerous",   name:"Dire Wolf",    normal:{p:0.60, m:1.63}, high:{p:0.36, m:2.72}},
-    {tier:"Dangerous",   name:"Sabertooth",   normal:{p:0.66, m:1.48}, high:{p:0.41, m:2.39}},
-    {tier:"Dangerous",   name:"Basilisk",     normal:{p:0.65, m:1.51}, high:{p:0.53, m:1.85}},
-    {tier:"Dangerous",   name:"Manticore Cub",normal:{p:0.66, m:1.48}, high:{p:0.46, m:2.13}},
-    {tier:"Dangerous",   name:"Ogre Hound",   normal:{p:0.63, m:1.56}, high:{p:0.35, m:2.80}},
-    {tier:"Dangerous",   name:"Stone Bear",   normal:{p:0.64, m:1.53}, high:{p:0.38, m:2.58}},
-    // Mythic (3)
-    {tier:"Mythic",      name:"Griffin", normal:{p:0.40, m:2.45}, high:{p:0.245, m:4}},
-    {tier:"Mythic",      name:"Kraken", normal:{p:0.1960, m:5}, high:{p:0.1225, m:8}},
-    {tier:"Mythic",      name:"Dragon", normal:{p:0.1225, m:7}, high:{p:0.07, m:14}},
-  ];
+<script type="module">
+import { TARGET_RTP, MULT_SCALE, priceMultiplierScaled, applyStepToStreak, payoutFromScaled } from './lib/gameEngine.js';
+import { deck } from './lib/deck.js';
 
+// Pricing model: step multiplier is priced from probability only, using TARGET_RTP (see lib/gameEngine.mjs)
+// - Animal cards supply only p (used for RNG)
+// - Pricing model returns an internally-scaled integer multiplier (MULT_SCALE) used for exact math
+// - Bets and balances are stored in cents (integers)
+// This ensures deterministic payouts, no streak-based probability changes, and auditable RTP.
   // ===== State =====
   let mode = "normal";
-  let streak = 1.00;
+  // current streak multiplier (scaled integer; 1.0 == MULT_SCALE)
+  let streakScaled = MULT_SCALE;
 
-  // Bet lock during streak
-  let bet = 10.00;
+  // Bet lock during streak (money in cents)
+  let betCents = 1000; // $10.00
   let betLocked = false;
-  let lockedBet = 10.00;
+  let lockedBetCents = 1000;
 
-  // Display-only balance
-  let balance = 2000.00;
+  // Balance in cents
+  let balanceCents = 200000; // $2,000.00
 
   // Current card (the one you are about to hunt)
   let currentIdx = 0;
+
+  // Current offered step multiplier (scaled) — determined when the card is shown
+  let currentStepScaled = priceMultiplierScaled(1);
 
   // Resolving state
   let resolving = false;
@@ -953,7 +960,9 @@ body{
   const card = $("card");
 
   const bigMul = $("bigMul");
+  const mulSubtext = $("mulSubtext");
   const needle = $("needle");
+  const chancePct = $("chancePct");
   const chanceText = $("chanceText");
   const modeText = $("modeText");
 
@@ -985,6 +994,9 @@ body{
   const round2 = (x) => Math.round(x * 100) / 100;
   const fmtMul = (x) => round2(x).toFixed(2) + "x";
   const fmtMoney = (x) => "$" + x.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+  // cents / scaled helpers
+  const fmtMoneyCents = (cents) => "$" + (cents/100).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+  const fmtMulScaled = (scaled) => (Math.round((scaled / MULT_SCALE) * 100) / 100).toFixed(2) + "x";
 
   function tierAccent(tier){
     // returns [color, soft]
@@ -1001,12 +1013,15 @@ body{
   }
 
   function getBet(){
-    return betLocked ? lockedBet : bet;
+    return (betLocked ? lockedBetCents : betCents) / 100;
+  }
+  function getBetCents(){
+    return betLocked ? lockedBetCents : betCents;
   }
   function lockBetIfStarting(){
-    if (!betLocked && Math.abs(streak - 1.0) < 1e-9){
+    if (!betLocked && streakScaled === MULT_SCALE){
       betLocked = true;
-      lockedBet = bet;
+      lockedBetCents = betCents;
     }
   }
   function unlockBet(){
@@ -1014,9 +1029,9 @@ body{
   }
 
   function updateBetUI(){
-    const b = getBet();
-    betValue.textContent = "$" + round2(b).toFixed(0);
-    betHud.textContent = fmtMoney(b);
+    const b = getBetCents();
+    betValue.textContent = "$" + Math.round(b/100).toFixed(0);
+    betHud.textContent = fmtMoneyCents(b);
     betUp.disabled = betLocked || resolving;
     betDown.disabled = betLocked || resolving;
     // Refresh cash-out label when bet changes
@@ -1024,11 +1039,11 @@ body{
   }
 
   function updateBalanceUI(){
-    balanceHud.textContent = fmtMoney(balance);
+    balanceHud.textContent = fmtMoneyCents(balanceCents);
   }
 
   function updateMidStreakUI(){
-    const mid = streak > 1.0000001;
+    const mid = streakScaled > MULT_SCALE;
 
   cashBtn.disabled = !mid || resolving;
 
@@ -1040,7 +1055,7 @@ body{
 
 
   streakChip.style.opacity = mid ? "1" : "0";
-  streakChip.textContent = fmtMul(streak);
+  streakChip.textContent = fmtMulScaled(streakScaled);
   // Update cash-out label to reflect current streak * bet
   updateCashoutAmount();
   }
@@ -1062,43 +1077,29 @@ body{
 
   // Log-space piecewise mapping with a watermark.
   // Watermark: Griffin at ~0.245 probability should map to 30% from left.
+  // Simple linear scale: 0% = left, 100% = right
   function scaleProbabilityToNeedle(prob) {
-    const minPercent = 0.02;      // left bound for tiny probs
-    const maxPercent = 0.98;      // right bound for largest probs
-    const minProb = 0.001;        // floor to avoid -Inf
-
-    // Watermark settings (Griffin high-mode ~0.245 -> 30%)
-    const watermarkProb = 0.245;
-    const watermarkPercent = 0.30;
-
-    const safe = Math.max(prob, minProb);
-    const logMin = Math.log(minProb);
-    const logMax = Math.log(1.0);
-    const normalized = (Math.log(safe) - logMin) / (logMax - logMin);
-
-    const watermarkNorm = (Math.log(watermarkProb) - logMin) / (logMax - logMin);
-
-    if (normalized <= watermarkNorm) {
-      // stretch lower-range so many low/mid probs sit left of watermark
-      return minPercent + (normalized / watermarkNorm) * (watermarkPercent - minPercent);
-    }
-
-    // above watermark: map remaining normalized space to [watermarkPercent, maxPercent]
-    return (
-      watermarkPercent +
-      ((normalized - watermarkNorm) / (1 - watermarkNorm)) * (maxPercent - watermarkPercent)
-    );
+    return prob; // Direct 1:1 mapping
   }
 
   function showCard(idx){
     currentIdx = idx;
     const c = deck[idx];
     const opt = c[mode];
+
+    // Price the step multiplier (fixed pricing model) — deterministic and independent of streak
+    const stepScaled = priceMultiplierScaled(opt.p);
+    currentStepScaled = stepScaled;
+
     // Top headline logic:
-    // - If not in streak yet, show card multiplier
-    // - If in streak, show projected streak if HIT (streak * card multiplier)
-    const projected = round2(streak * opt.m);
-    const headlineValue = (streak > 1.0000001) ? projected : opt.m;
+    // - Show projected DOLLAR amount if next hunt hits
+    // - Below it, show the multiplier that will be reached
+    const projectedScaled = applyStepToStreak(streakScaled, stepScaled);
+    const bCents = getBetCents();
+    const projectedDollars = (projectedScaled * bCents) / MULT_SCALE;
+    
+    bigMul.textContent = fmtMoneyCents(Math.round(projectedDollars));
+    mulSubtext.textContent = fmtMulScaled(projectedScaled);
 
     const [tierColor, tierSoft] = tierAccent(c.tier);
     card.style.setProperty("--tier", tierColor);
@@ -1107,13 +1108,13 @@ body{
       tierPill.textContent = c.tier;
       beastName.textContent = c.name;
 
-      bigMul.innerHTML = `${headlineValue.toFixed(2)}<small>x</small>`;
-      cardBottom.textContent = fmtMul(opt.m);
+      cardBottom.textContent = fmtMulScaled(stepScaled);
 
       // Keep the top multiplier color static (CSS handles the fixed light green)
 
     const pPct = Math.round(opt.p * 100);
     chanceText.textContent = pPct + "%";
+    chancePct.textContent = pPct + "%";
     needle.style.left = (scaleProbabilityToNeedle(opt.p) * 100).toFixed(2) + "%";
     modeText.textContent = mode.toUpperCase();
 
@@ -1163,8 +1164,8 @@ body{
   if (resolving) return;
 
   lockBetIfStarting();
-  const b = getBet();
-  const isFirstBet = Math.abs(streak - 1.0) < 1e-9;
+  const bCents = getBetCents();
+  const isFirstBet = (streakScaled === MULT_SCALE);
 
   const c = deck[currentIdx];
   const opt = c[mode];
@@ -1179,15 +1180,15 @@ body{
   const suspense = 250;
 
   setTimeout(() => {
-    // charge bet only for the first hunt in the round
-    if (isFirstBet) balance = round2(balance - b);
+    // charge bet only for the first hunt in the round (work in cents)
+    if (isFirstBet) balanceCents = Math.round(balanceCents - bCents);
 
     const hit = Math.random() < opt.p;
 
     if (hit){
-      const prev = streak;
-      const next = round2(streak * opt.m);
-      streak = next;
+      const prevScaled = streakScaled;
+      const nextScaled = applyStepToStreak(streakScaled, currentStepScaled);
+      streakScaled = nextScaled;
       hitCount++;
       
 
@@ -1200,26 +1201,26 @@ body{
       updateMidStreakUI();
       updateGlow();
       
-      animateStreak(prev, next);
+      animateStreak(prevScaled / MULT_SCALE, nextScaled / MULT_SCALE);
 
 
       // Show bet deduction only when the bet was charged on this hunt
       setToast(
         "good",
-        `HIT! ${c.name} • Streak ${fmtMul(prev)} → ${fmtMul(next)}` + (isFirstBet ? ` (−${fmtMoney(b)} bet)` : ``)
+        `HIT! ${c.name} • Streak ${fmtMulScaled(prevScaled)} → ${fmtMulScaled(nextScaled)}` + (isFirstBet ? ` (−${fmtMoneyCents(bCents)} bet)` : ``)
       );
 
       addHistoryEntry({
         type: "hit",
-        label: `${c.name} • +${opt.m.toFixed(2)}x`,
-        rightText: fmtMul(streak)
+        label: `${c.name} • +${fmtMulScaled(currentStepScaled)}`,
+        rightText: fmtMulScaled(streakScaled)
       });
       
       drawNewCard(); // next decision card
     } else {
       // MISS animation: show red X briefly, then start a new round
       card.classList.add("showMissX");
-      setToast("bad", `MISS. ${c.name} (−${fmtMoney(b)} bet)`);
+      setToast("bad", `MISS. ${c.name} (−${fmtMoneyCents(bCents)} bet)`);
 
       setTimeout(() => {
         card.classList.remove("showMissX");
@@ -1247,15 +1248,16 @@ body{
 
   function cashOut(){
     if (resolving) return;
-    if (!(streak > 1.0000001)) return;
+    if (!(streakScaled > MULT_SCALE)) return;
 
-    const b = getBet();
-    const profit = round2(b * (streak - 1));
-    balance = round2(balance + profit);
+    const bCents = getBetCents();
+    const payoutCents = payoutFromScaled(bCents, streakScaled);
+    const profitCents = Math.max(0, payoutCents - bCents);
+    balanceCents = Math.round(balanceCents + profitCents);
 
-    setToast("good", `CASH OUT! +${fmtMoney(profit)} at ${fmtMul(streak)}. New streak begins.`);
+    setToast("good", `CASH OUT! +${fmtMoneyCents(profitCents)} at ${fmtMulScaled(streakScaled)}. New streak begins.`);
 
-    streak = 1.00;
+    streakScaled = MULT_SCALE;
     clearHistory();
     unlockBet();
     drawNewCard();
@@ -1264,12 +1266,12 @@ body{
     updateBalanceUI();
     updateMidStreakUI();
 
-    startNewRound(`Cashed out +${fmtMoney(profit)}. New beast drawn.`);
+    startNewRound(`Cashed out +${fmtMoneyCents(profitCents)}. New beast drawn.`);
 
   }
 
   function skip(){
-    const mid = streak > 1.0000001;
+    const mid = streakScaled > MULT_SCALE;
   if (resolving || betLocked || mid) return;  // NEW safety
   setToast(null, "Skipped. New beast drawn.");
   drawNewCard();
@@ -1277,7 +1279,8 @@ body{
 
   function betStep(delta){
     if (betLocked || resolving) return;
-    bet = round2(Math.max(1, bet + delta));
+    // delta is in dollars; store in cents
+    betCents = Math.max(100, betCents + Math.round(delta * 100));
     updateBetUI();
   }
 
@@ -1321,18 +1324,18 @@ function updateCashoutAmount(){
   const el = document.getElementById("cashAmount");
   if (!label || !el) return;
 
-  const mid = streak > 1.0000001;
-  const bet = getBet();
+  const mid = streakScaled > MULT_SCALE;
+  const bCents = getBetCents();
   if (!mid) {
     // default state at round start: show $0.00 muted
-    el.textContent = fmtMoney(0);
+    el.textContent = fmtMoneyCents(0);
     label.classList.remove('active');
     return;
   }
 
   // mid-streak: show computed cashout and mark active (green)
-  const cash = round2(bet * streak);
-  el.textContent = fmtMoney(cash);
+  const cashCents = Math.round((bCents * streakScaled) / MULT_SCALE);
+  el.textContent = fmtMoneyCents(cashCents);
   label.classList.add('active');
 }
   // ===== Wire =====
@@ -1359,7 +1362,7 @@ updateBetUI();
 clearHistory();
 
 function startNewRound(message){
-  streak = 1.00;
+  streakScaled = MULT_SCALE;
   hitCount = 0;
   unlockBet();
   clearHistory();
